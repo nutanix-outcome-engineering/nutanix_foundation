@@ -1,0 +1,21 @@
+# http://editorconfig.org
+root = true
+
+[*]
+charset = utf-8
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[{*.js,*.vue,*.json,*.yml,*.yaml,*.mjs}]
+indent_size = 2
+indent_style = space
+
+## JS
+[*.js,*.mjs]
+quote_type = single
+
+## TS
+[*.ts]
+indent_size = 2
+indent_style = space
+quote_type = single
