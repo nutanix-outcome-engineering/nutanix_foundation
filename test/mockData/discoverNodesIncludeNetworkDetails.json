@@ -1,0 +1,123 @@
+[
+  {
+    "model": "XC6420-6 CORE",
+    "nodes": [
+      {
+        "foundation_version": "foundation-5.3-ef4c279c",
+        "ipmi_mac": "6c:2b:59:b4:5c:6b",
+        "ipv6_address": "fe80::20c:29ff:fe64:d8a2%eth0",
+        "node_uuid": "d5a45197-1d4d-4706-afef-ae4167cbf312",
+        "node_serial": "87JDZB3",
+        "current_network_interface": "eth0",
+        "node_position": "C",
+        "hypervisor": "esx",
+        "svm_ip": "10.38.43.31",
+        "nos_version": "6.5.1.6",
+        "cluster_id": 272816314027617000,
+        "current_cvm_vlan_tag": 0,
+        "hypervisor_version": "7.0.2-17867351",
+        "attributes": {
+          "vswitch_nics": [
+            "i40e",
+            "ixgbe",
+            "mlx5_core"
+          ],
+          "lcm_family": "dell_gen_14",
+          "vpd_method": "dell_2u4n",
+          "license_class": "software_only",
+          "default_workload": "high_perf"
+        },
+        "model": "XC6420-6 CORE",
+        "configured": false,
+        "cvm_gateway": "10.38.43.1",
+        "ipmi_netmask": "255.255.255.128",
+        "hypervisor_hostname": "PHX-POC271-3",
+        "hypervisor_netmask": "255.255.255.128",
+        "cvm_netmask": "255.255.255.128",
+        "ipmi_ip": "10.38.43.35",
+        "hypervisor_gateway": "10.38.43.1",
+        "cvm_ip": "10.38.43.31",
+        "hypervisor_ip": "10.38.43.27",
+        "ipmi_gateway": "10.38.43.1"
+      },
+      {
+        "foundation_version": "foundation-5.3-ef4c279c",
+        "ipmi_mac": "b8:cb:29:a1:6b:ea",
+        "ipv6_address": "fe80::20c:29ff:fe4e:577f%eth0",
+        "node_uuid": "29be05a8-6a8d-4b2f-8630-37bdef4a5621",
+        "node_serial": "87JFZB3",
+        "current_network_interface": "eth0",
+        "node_position": "B",
+        "hypervisor": "esx",
+        "svm_ip": "10.38.43.30",
+        "nos_version": "6.5.1.6",
+        "cluster_id": 272816314027617000,
+        "current_cvm_vlan_tag": 0,
+        "hypervisor_version": "7.0.2-17867351",
+        "attributes": {
+          "vswitch_nics": [
+            "i40e",
+            "ixgbe",
+            "mlx5_core"
+          ],
+          "lcm_family": "dell_gen_14",
+          "vpd_method": "dell_2u4n",
+          "license_class": "software_only",
+          "default_workload": "high_perf"
+        },
+        "model": "XC6420-6 CORE",
+        "configured": false,
+        "cvm_gateway": "10.38.43.1",
+        "ipmi_netmask": "255.255.255.128",
+        "hypervisor_hostname": "PHX-POC271-2",
+        "hypervisor_netmask": "255.255.255.128",
+        "cvm_netmask": "255.255.255.128",
+        "ipmi_ip": "10.38.43.34",
+        "hypervisor_gateway": "10.38.43.1",
+        "cvm_ip": "10.38.43.30",
+        "hypervisor_ip": "10.38.43.26",
+        "ipmi_gateway": "10.38.43.1"
+      },
+      {
+        "foundation_version": "foundation-5.3-ef4c279c",
+        "ipmi_mac": "b8:cb:29:a2:01:d8",
+        "ipv6_address": "fe80::20c:29ff:fe01:d00d%eth0",
+        "node_uuid": "42df1d67-ce4a-4c5b-88d6-7dfcfa97a807",
+        "node_serial": "87JCZB3",
+        "current_network_interface": "eth0",
+        "node_position": "A",
+        "hypervisor": "esx",
+        "svm_ip": "10.38.43.29",
+        "nos_version": "6.5.1.6",
+        "cluster_id": 272816314027617000,
+        "current_cvm_vlan_tag": 0,
+        "hypervisor_version": "7.0.2-17867351",
+        "attributes": {
+          "vswitch_nics": [
+            "i40e",
+            "ixgbe",
+            "mlx5_core"
+          ],
+          "lcm_family": "dell_gen_14",
+          "vpd_method": "dell_2u4n",
+          "license_class": "software_only",
+          "default_workload": "high_perf"
+        },
+        "model": "XC6420-6 CORE",
+        "configured": false,
+        "cvm_gateway": "10.38.43.1",
+        "ipmi_netmask": "255.255.255.128",
+        "hypervisor_hostname": "PHX-POC271-1",
+        "hypervisor_netmask": "255.255.255.128",
+        "cvm_netmask": "255.255.255.128",
+        "ipmi_ip": "10.38.43.33",
+        "hypervisor_gateway": "10.38.43.1",
+        "cvm_ip": "10.38.43.29",
+        "hypervisor_ip": "10.38.43.25",
+        "ipmi_gateway": "10.38.43.1"
+      }
+    ],
+    "block_id": "87J9ZB3",
+    "chassis_n": 4
+  }
+]

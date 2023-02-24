@@ -1,5 +1,6 @@
 const axios = require('axios')
 const _ = require('lodash')
+const MockAdapter = require('axios-mock-adapter')
 
 // module.exports = {
 //     imageCluster: imageCluster,
@@ -10,7 +11,7 @@ const _ = require('lodash')
 
 
 class Foundation {
-  constructor(ip, { logger, timeout }) {
+  constructor(ip, { logger, timeout=55000, mock=false }) {
     this.ip = ip
     this.logger = logger || null
 
@@ -24,6 +25,12 @@ class Foundation {
           'Accept': 'application/json'
       },
     })
+
+    if (mock) {
+      /** @private */
+      this.mockAdapter = new MockAdapter(this._client)
+      this.setupMockAdapter()
+    }
   }
 
   /**
@@ -233,21 +240,34 @@ class Foundation {
    * @param {boolean} [filterOptions.includeConfigured] - Include configured nodes in the return value.
    * @param {string} [filterOptions.blockSN] - Filter by block serial number.
    * @param {*} [filterOptions] -
+   * @param {Object} fetchExtra - Fetch extra info about each node
+   * @param {boolean} [fetchExtra.fetchNetworkInfo] - Fetch network information about each node
+   * @param {*} [fetchExtra] -
    * @returns
    */
-  async discoverNodes({
-    includeConfigured=false,
-    blockSN
-  }, {fetchNetworkInfo=false}) {
-    const resp = await this.axInstance.get('/discover_nodes')
-    let blocks = _.filter(resp.data, {'block_id': blockSN})
+  async discoverNodes(filters={}, fetchExtra={}) {
+    let {
+      includeConfigured = false,
+      blockSN
+    } = filters
+    let {
+      fetchNetworkInfo=false
+    } = fetchExtra
+
+    const resp = await this._client.get('/discover_nodes')
+    let blocks = resp.data
+    if (blockSN) {
+      blocks = _.filter(blocks, {'block_id': blockSN})
+    }
     if (blocks.length == 0) {
       return []
     }
 
-    blocks.forEach(block => {
-      block.nodes = _.filter(block.nodes, ['configured', includeConfigured])
-    })
+    if (!includeConfigured) {
+      blocks.forEach(block => {
+        block.nodes = _.filter(block.nodes, ['configured', includeConfigured])
+      })
+    }
 
     if (fetchNetworkInfo) {
       let nodeArr = []
@@ -269,7 +289,7 @@ class Foundation {
       }
     }
 
-    this.logger.debug(blocks)
+    this?.logger?.debug(blocks)
 
     return blocks
   }
@@ -279,17 +299,20 @@ class Foundation {
   }
 
   async nodeNetworkDetailsArray(nodes, timeout=45) {
-    const resp = await this.axInstance.post('/node_network_details', {
-      "nodes": nodesArray,
+    const resp = await this._client.post('/node_network_details', {
+      "nodes": nodes,
       "timeout": `${timeout}`
     })
 
-    this.logger.debug(resp.data)
+    this?.logger?.debug(resp.data)
 
     return resp.data.nodes
   }
 
-
+  /** @private */
+  setupMockAdapter() {
+    this.mockAdapter.onGet('/discover_nodes').reply(200, require('./test/mockData/discoverNodesRaw.json'))
+    this.mockAdapter.onPost('/node_network_details').reply(200, require('./test/mockData/nodeNetworkDetails.json'))
+  }
 }
-
-exports.default = Foundation
+module.exports = Foundation
