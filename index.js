@@ -2,14 +2,6 @@ const axios = require('axios')
 const _ = require('lodash')
 const MockAdapter = require('axios-mock-adapter')
 
-// module.exports = {
-//     imageCluster: imageCluster,
-//     status: status,
-//     getClusterLog: getClusterLog,
-//     getNodeLog: getNodeLog,
-// }
-
-
 class Foundation {
   constructor(ip, { logger, timeout=55000, mock=false }) {
     this.ip = ip
@@ -28,8 +20,8 @@ class Foundation {
 
     if (mock) {
       /** @private */
-      this.mockAdapter = new MockAdapter(this._client)
-      this.setupMockAdapter()
+      this._mockAdapter = new MockAdapter(this._client)
+      this._setupMockAdapter()
     }
   }
 
@@ -310,9 +302,9 @@ class Foundation {
   }
 
   /** @private */
-  setupMockAdapter() {
-    this.mockAdapter.onGet('/discover_nodes').reply(200, require('./test/mockData/discoverNodesRaw.json'))
-    this.mockAdapter.onPost('/node_network_details').reply(200, require('./test/mockData/nodeNetworkDetails.json'))
+  _setupMockAdapter() {
+    this._mockAdapter.onGet('/discover_nodes').reply(200, require('./test/mockData/discoverNodesRaw.json'))
+    this._mockAdapter.onPost('/node_network_details').reply(200, require('./test/mockData/nodeNetworkDetails.json'))
   }
 }
 module.exports = Foundation
