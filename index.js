@@ -48,7 +48,7 @@ class Foundation {
     let blocks = []
     let blockCount = -1
     let blockID = 'none'
-    let allSVM = []
+    let svmList = []
     let numNodesToFormCluster = nodes.length
     let initNodes = true, initCluster = false
     if (advanced.numberOfNodesToBuildClusterWith) {
@@ -60,7 +60,7 @@ class Foundation {
     }
     for (let nodeCount = 0; nodeCount < nodes.length; nodeCount++) {
       if (nodeCount < numNodesToFormCluster) {
-        allSVM.push(nodes[nodeCount].svmIP)
+        svmList.push(nodes[nodeCount].svmIP)
       }
       // CREATE BLOCKS AND NODES
       if (blockID != nodes[nodeCount].blockID) {
@@ -119,9 +119,9 @@ class Foundation {
         cluster_init_now: initCluster,
         cluster_name: clusterInfo.name,
         cluster_external_ip: clusterInfo.externalIP,
-        cluster_members: allSVM,
-        single_node_cluster: allSVM.length == 1,
-        redundancy_factor: (allSVM.length == 1) ? 1 : null,
+        cluster_members: svmList,
+        single_node_cluster: svmList.length == 1,
+        redundancy_factor: 2,
         cvm_dns_servers: clusterInfo.nameserver,
         cvm_ntp_servers: clusterInfo.ntpServer || clusterInfo.nameserver,
         hypervisor_ntp_servers: clusterInfo.ntpServer || clusterInfo.nameserver
