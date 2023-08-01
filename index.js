@@ -1,9 +1,8 @@
 const axios = require('axios')
 const _ = require('lodash')
-const MockAdapter = require('axios-mock-adapter')
 
 class Foundation {
-  constructor(ip, { logger, timeout=55000, mock=false }) {
+  constructor(ip, { logger, timeout, mock }={timeout: 55000, mock: false}) {
     this.ip = ip
     this.logger = logger || null
 
@@ -19,6 +18,7 @@ class Foundation {
     })
 
     if (mock) {
+      const MockAdapter = require('axios-mock-adapter')
       /** @private */
       this._mockAdapter = new MockAdapter(this._client)
       this._setupMockAdapter()
@@ -231,6 +231,7 @@ class Foundation {
    * @param {Object} filterOptions - Options to filter the disscovered nodes.
    * @param {boolean} [filterOptions.includeConfigured] - Include configured nodes in the return value.
    * @param {string} [filterOptions.blockSN] - Filter by block serial number.
+   * @param {string} [filterOptions.ipmiIP] - Filter by node ipmi ip.
    * @param {*} [filterOptions] -
    * @param {Object} fetchExtra - Fetch extra info about each node
    * @param {boolean} [fetchExtra.fetchNetworkInfo] - Fetch network information about each node
@@ -238,12 +239,14 @@ class Foundation {
    * @returns
    */
   async discoverNodes(filters={}, fetchExtra={}) {
+    // TODO: includeConfigured=true and fetchNetworkInfo=true do not work together. Need to handle this
     let {
       includeConfigured = false,
-      blockSN
+      blockSN,
+      ipmiIP
     } = filters
     let {
-      fetchNetworkInfo=false
+      fetchNetworkInfo = ipmiIP ? true : false
     } = fetchExtra
 
     const resp = await this._client.get('/discover_nodes')
@@ -278,6 +281,13 @@ class Foundation {
             }
           }
         }
+      }
+    }
+
+    if (ipmiIP) {
+      blocks = _.filter(blocks, {nodes: [{ipmi_ip: ipmiIP}]})
+      if (blocks.length > 0) {
+        blocks[0].nodes = _.filter(blocks[0].nodes, {ipmi_ip: ipmiIP})
       }
     }
 
