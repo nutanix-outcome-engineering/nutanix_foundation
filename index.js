@@ -228,11 +228,11 @@ class Foundation {
   /**
    * Discover nodes running AOS.
    *
-   * @param {Object} filterOptions - Options to filter the disscovered nodes.
-   * @param {boolean} [filterOptions.includeConfigured] - Include configured nodes in the return value.
-   * @param {string} [filterOptions.blockSN] - Filter by block serial number.
-   * @param {string} [filterOptions.ipmiIP] - Filter by node ipmi ip.
-   * @param {*} [filterOptions] -
+   * @param {Object} filters - Options to filter the disscovered nodes.
+   * @param {boolean} [filters.includeConfigured] - Include configured nodes in the return value.
+   * @param {string} [filters.blockSN] - Filter by block serial number.
+   * @param {string} [filters.ipmiIP] - Filter by node ipmi ip.
+   * @param {*} [filters] -
    * @param {Object} fetchExtra - Fetch extra info about each node
    * @param {boolean} [fetchExtra.fetchNetworkInfo] - Fetch network information about each node
    * @param {*} [fetchExtra] -
