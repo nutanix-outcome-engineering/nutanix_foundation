@@ -34,7 +34,7 @@ build:
 
 scan:
   stage: scan
-  image: java:17
+  image: eclipse-temurin:17
   needs:
     - build
   script:
