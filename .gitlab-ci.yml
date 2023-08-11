@@ -1,0 +1,42 @@
+# .gitlab-ci.yml file
+default:
+  image: node:16
+  tags:
+    - docker
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+
+stages:
+  - test
+  - build
+  - scan
+
+test:
+  stage: test
+  script:
+    - npm clean-install
+    - npm run test
+  rules:
+    - when: always
+      allow_failure: false
+
+build:
+  stage: build
+  script:
+    - npm clean-install
+  needs:
+    - test
+
+scan:
+  stage: scan
+  image: java:17
+  needs:
+    - build
+  script:
+    - /bin/bash bin/scan.sh
+
