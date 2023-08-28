@@ -1,7 +1,24 @@
 const axios = require('axios')
 const _ = require('lodash')
 
+/**
+ * @typedef {Object} LogContents
+ * @property {string} ip IP Address of clsuter or node the log is for.
+ * @property {string} logContents The contents of the log file
+ * @property {string} type Type of log file returned
+ *
+ * @typedef {Object} Node
+ */
 class Foundation {
+
+  /**
+   * @class
+   * @param {string} ip IP of the foundation VM
+   * @param {Object} options Options for this
+   * @param {Object} [options.logger] Optional logger for debug logging
+   * @param {number} [options.timeout=55000] timeout for requests to the foundation VM
+   * @param {boolean} [options.mock=false] Boolean to enable mock interface. Only use for testing.
+   */
   constructor(ip, { logger, timeout, mock }={timeout: 55000, mock: false}) {
     this.ip = ip
     this.logger = logger || null
@@ -32,7 +49,7 @@ class Foundation {
    * @param {Object} hypervisor - Hypervisor details. If it is null it is treated as using the Bundled AHV.
    * @param {string} [hypervisor.os] - Hypervisor OS. If it is null it is treated as using the Bundled AHV.
    * @param {string} [hypervisor.type] - The type of hypervisor. If it is null it is treated as using the Bundled AHV.
-   * @param {string} [hypervisor.sku] - HyperV SKU. Only used if {@link [hypervisor.type]} is hyperv
+   * @param {string} [hypervisor.sku] - HyperV SKU. Only used if [hypervisor.type]{@link hypervisor.type} is hyperv
    * @param {string} hypervisor.filename - Filename of the hypervisor installer ISO.
    * @param {string} aos - Filename of the AOS bundle to use.
    * @param {Object} advanced - Advanced foundation parameters
@@ -41,7 +58,7 @@ class Foundation {
    * @param {object} [advanced.ucs] - Details when imaging UCS.
    * @param {number} [advanced.cvmRamInGB] - Memory to deploy the CVM with. Leave null, undefined, or 0 to use Foundation recommended defaults.
    * @param {number} [advanced.rf] - Value to set the clsuter redundancy factor to.
-   * @param {boolean} formCluster
+   * @param {boolean} [formCluster=false] Form cluster. If set to true nodes are expected to be imaged previously
    * @returns {Object}
    */
   generateImageNodePayload(clusterInfo, nodes, hypervisor, aos, advanced, formCluster) {
@@ -162,8 +179,8 @@ class Foundation {
   }
 
   /**
-   *
-   * See {@link generateImageNodePayload} for parameter information.
+   *  Image a set of nodes.
+   * See {@link Foundation#generateImageNodePayload} for parameter information.
    * @returns {Object}
    */
   async imageNodes(cluster, nodes, hypervisor, aos, advanced, formCluster) {
@@ -199,7 +216,7 @@ class Foundation {
    * @param {*} foundationIP
    * @param {*} nodeIP
    * @param {*} sessionID
-   * @returns
+   * @returns {LogContents} Object that contains the node logContents
    */
   async getNodeLog(nodeIP, sessionID = undefined) {
     let response = (this._client.get('/node_log', { params: { hypervisor_ip: nodeIP, session_id: sessionID }})).data
@@ -212,9 +229,10 @@ class Foundation {
 
   /**
    * Gets the cluster formation logs.
-   * @param {*} clusterIP
-   * @param {*} sessionID
-   * @returns
+   *
+   * @param {string} clusterIP
+   * @param {string} sessionID
+   * @returns {LogContents} Object that contains the cluster logContents
    */
   async getClusterLog(clusterIP, sessionID = undefined) {
     let response = (this._client.get('/cluster_log', { params: { cvm_ip: clusterIP, session_id: sessionID }})).data
@@ -236,7 +254,7 @@ class Foundation {
    * @param {Object} fetchExtra - Fetch extra info about each node
    * @param {boolean} [fetchExtra.fetchNetworkInfo] - Fetch network information about each node
    * @param {*} [fetchExtra] -
-   * @returns
+   * @returns {Array} - Array containing discovered nodes filtered and including extra details.
    */
   async discoverNodes(filters={}, fetchExtra={}) {
     // TODO: includeConfigured=true and fetchNetworkInfo=true do not work together. Need to handle this
@@ -291,7 +309,7 @@ class Foundation {
       }
     }
 
-    this?.logger?.debug(blocks)
+    this?.logger?.debug(JSON.stringify(blocks))
 
     return blocks
   }
@@ -306,9 +324,21 @@ class Foundation {
       "timeout": `${timeout}`
     })
 
-    this?.logger?.debug(resp.data)
+    this?.logger?.debug(JSON.stringify(resp.data))
 
     return resp.data.nodes
+  }
+
+  /**
+   *
+   * @param {Node[]} nodes
+   */
+  async provisionNetwork(nodes) {
+    const resp = await this._client.post('/provision_network', {nodes})
+
+    this?.logger?.debug(JSON.stringify(resp.data))
+
+    return resp.data
   }
 
   /** @private */

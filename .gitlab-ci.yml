@@ -28,9 +28,16 @@ test:
 build:
   stage: build
   script:
-    - npm clean-install
+    - /bin/bash package.sh
   needs:
     - test
+  artifacts:
+    untracked: false
+    when: on_success
+    expire_in: "30 days"
+    paths:
+      - dependencies.tar.gz
+      - nutanix_foundation.tar.gz
 
 scan:
   stage: scan
