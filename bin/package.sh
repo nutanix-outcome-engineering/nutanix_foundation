@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -x
 PROJECT_ROOT=$(git rev-parse --show-toplevel)
 
 tar -C ${PROJECT_ROOT} -czf nutanix_foundation.tar.gz index.js package.json readme.md
