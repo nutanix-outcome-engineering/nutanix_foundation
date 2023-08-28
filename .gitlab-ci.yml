@@ -28,7 +28,7 @@ test:
 build:
   stage: build
   script:
-    - /bin/bash package.sh
+    - /bin/bash bin/package.sh
   needs:
     - test
   artifacts:
@@ -45,5 +45,5 @@ scan:
   needs:
     - build
   script:
-    - /bin/bash bin/scan.sh
+    - /bin/bash bin/blackduck.sh
 
