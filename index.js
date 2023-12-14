@@ -249,6 +249,7 @@ class Foundation {
    * @param {Object} filters - Options to filter the disscovered nodes.
    * @param {boolean} [filters.includeConfigured] - Include configured nodes in the return value.
    * @param {string} [filters.blockSN] - Filter by block serial number.
+   * @param {string} [filters.ipv6Address] - Filter by cvm ipv6-Link-Local address.
    * @param {string} [filters.ipmiIP] - Filter by node ipmi ip.
    * @param {*} [filters] -
    * @param {Object} fetchExtra - Fetch extra info about each node
@@ -261,6 +262,7 @@ class Foundation {
     let {
       includeConfigured = false,
       blockSN,
+      ipv6Address,
       ipmiIP
     } = filters
     let {
@@ -275,10 +277,15 @@ class Foundation {
     if (blocks.length == 0) {
       return []
     }
-
-    if (!includeConfigured) {
+    // Filter on discovered nodes output before proceeding to node_network_details
+    if (!includeConfigured || ipv6Address) {
       blocks.forEach(block => {
-        block.nodes = _.filter(block.nodes, ['configured', includeConfigured])
+        if (!includeConfigured) {
+          block.nodes = _.filter(block.nodes, ['configured', includeConfigured])
+        }
+        if (ipv6Address) {
+          block.nodes = _.filter(block.nodes, n => _.includes(n.ipv6_address, ipv6Address))
+        }
       })
     }
 
@@ -286,7 +293,14 @@ class Foundation {
       let nodeArr = []
       for (let block of blocks) {
         for(let node of block.nodes) {
-          nodeArr.push({"ipv6_address": node.ipv6_address})
+          if(ipv6Address) {
+            if (node.ipv6_address.includes(ipv6Address)) {
+              nodeArr.push({"ipv6_address": node.ipv6_address})
+            }
+          }
+          else {
+            nodeArr.push({"ipv6_address": node.ipv6_address})
+          }
         }
       }
       let netDetails = await this.nodeNetworkDetailsArray(nodeArr)

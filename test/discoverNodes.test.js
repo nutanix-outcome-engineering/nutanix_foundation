@@ -27,4 +27,10 @@ describe('Discover Nodes Tests', () => {
 
     expect(discovered).toStrictEqual(require('./mockData/discoverNodesFilterByBMCIP.json'))
   })
+
+  test('discover node + network details with filtering by ipv6Address', async () => {
+    let discovered = await fvm.discoverNodes({ipv6Address: 'fe80::20c:29ff:fe64:d8a2'}, {fetchNetworkInfo: true})
+
+    expect(discovered).toStrictEqual(require('./mockData/discoverNodesFilterByIpv6Address.json'))
+  })
 })
