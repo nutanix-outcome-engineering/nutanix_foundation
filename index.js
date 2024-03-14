@@ -2,23 +2,15 @@ const axios = require('axios')
 const _ = require('lodash')
 
 /**
- * @typedef {Object} LogContents
- * @property {string} ip IP Address of clsuter or node the log is for.
- * @property {string} logContents The contents of the log file
- * @property {string} type Type of log file returned
- *
- * @typedef {Object} Node
+ * @class
+ * @param {string} ip IP of the foundation VM
+ * @param {Object} options Options for this
+ * @param {Object} [options.logger] Optional logger for debug logging
+ * @param {number} [options.timeout=55000] timeout for requests to the foundation VM
+ * @param {boolean} [options.mock=false] Boolean to enable mock interface. Only use for testing.
  */
 class Foundation {
-
-  /**
-   * @class
-   * @param {string} ip IP of the foundation VM
-   * @param {Object} options Options for this
-   * @param {Object} [options.logger] Optional logger for debug logging
-   * @param {number} [options.timeout=55000] timeout for requests to the foundation VM
-   * @param {boolean} [options.mock=false] Boolean to enable mock interface. Only use for testing.
-   */
+  #version
   constructor(ip, { logger, timeout, mock }={timeout: 55000, mock: false}) {
     this.ip = ip
     this.logger = logger || null
@@ -42,11 +34,39 @@ class Foundation {
     }
   }
 
+  get version() {
+    if (!this.#version) {
+      this.#version = (async () => {
+        try {
+          return (await this._client.get('/version')).data
+        } catch {
+          return 'unknown'
+        }
+      })()
+    }
+    return this.#version
+  }
+
   /**
    *
-   * @param {Object} clusterInfo
-   * @param {Object[]} nodes
-   * @param {Object} hypervisor - Hypervisor details. If it is null it is treated as using the Bundled AHV.
+   * @param {Cluster} clusterInfo Cluster info object
+   * @param {string} clusterInfo.name
+   * @param {string} clusterInfo.externalIP
+   * @param {string} clusterInfo.gateway
+   * @param {string} clusterInfo.subnet
+   * @param {string[]} clusterInfo.ntpServer
+   * @param {string[]} clusterInfo.nameserver
+   * @param {boolean} clusterInfo.rdmanEnabled
+   * @param {Node[]} nodes
+   * @param {String} nodes[].ipmiIP
+   * @param {String} nodes[].ipmiMac
+   * @param {String} nodes[].ipmiUsername
+   * @param {String} nodes[].ipmiPassword
+   * @param {String} nodes[].hypervisorIP
+   * @param {String} nodes[].position
+   * @param {String} nodes[].serial
+   * @param {String} nodes[].svmIP SVM IP of the Node. Also known as CVM IP.
+   * @param {?Object} hypervisor - Hypervisor details. If it is null it is treated as using the Bundled AHV.
    * @param {string} [hypervisor.os] - Hypervisor OS. If it is null it is treated as using the Bundled AHV.
    * @param {string} [hypervisor.type] - The type of hypervisor. If it is null it is treated as using the Bundled AHV.
    * @param {string} [hypervisor.sku] - HyperV SKU. Only used if [hypervisor.type]{@link hypervisor.type} is hyperv
@@ -58,22 +78,20 @@ class Foundation {
    * @param {object} [advanced.ucs] - Details when imaging UCS.
    * @param {number} [advanced.cvmRamInGB] - Memory to deploy the CVM with. Leave null, undefined, or 0 to use Foundation recommended defaults.
    * @param {number} [advanced.rf] - Value to set the clsuter redundancy factor to.
-   * @param {boolean} [formCluster=false] Form cluster. If set to true nodes are expected to be imaged previously
+   * @param {Object} operations - Operations to perform on nodes and/or cluster
+   * @param {boolean} [operations.formCluster=false] Form cluster. If set to true nodes are expected to be imaged previously
+   * @param {boolean} [operations.imageNodes=true] Form cluster. If set to true nodes are expected to be imaged previously
    * @returns {Object}
    */
-  generateImageNodePayload(clusterInfo, nodes, hypervisor, aos, advanced, formCluster) {
+  generateImageNodePayload(clusterInfo, nodes, hypervisor, aos, advanced, operations) {
     let blocks = []
     let blockCount = -1
     let blockID = 'none'
     let svmList = []
     let numNodesToFormCluster = nodes.length
-    let initNodes = true, initCluster = false
+    let initNodes = operations.imageNodes || true, initCluster = operations.formCluster || false
     if (advanced.numberOfNodesToBuildClusterWith) {
       numNodesToFormCluster = advanced.numberOfNodesToBuildClusterWith
-    }
-    if (formCluster) {
-      initNodes = false
-      initCluster = true
     }
     for (let nodeCount = 0; nodeCount < nodes.length; nodeCount++) {
       if (nodeCount < numNodesToFormCluster) {
@@ -100,7 +118,7 @@ class Foundation {
         // A null hypervisor means "bundled AHV", which is treated as kvm.
         hypervisor: hypervisor === null ? 'kvm' : hypervisor.os,
         hypervisor_ip: nodes[nodeCount].hypervisorIP,
-        hypervisor_hostname: clusterInfo.name + '-' + (nodeCount + 1),
+        hypervisor_hostname: initNodes ? clusterInfo.name + '-' + (nodeCount + 1) : null,
         ipmi_configure_successful: true,
         node_position: nodes[nodeCount].position,
         ucsm_managed_mode: (advanced.ucs) || null,
@@ -266,8 +284,13 @@ class Foundation {
       ipmiIP
     } = filters
     let {
+      // This is because you can't filter by IPMI ip unless you get network details because it isn't included in the initial call
       fetchNetworkInfo = ipmiIP ? true : false
     } = fetchExtra
+
+    if (includeConfigured && fetchNetworkInfo) {
+      throw new Error('Invalid option pairing')
+    }
 
     const resp = await this._client.get('/discover_nodes')
     let blocks = resp.data
