@@ -38,7 +38,7 @@ class Foundation {
     if (!this.#version) {
       this.#version = (async () => {
         try {
-          return (await this._client.get('/version')).data
+          return String((await this._client.get('/version')).data)
         } catch {
           return 'unknown'
         }
