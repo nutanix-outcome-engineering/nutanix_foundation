@@ -56,7 +56,7 @@ class Foundation {
    * @param {string} clusterInfo.subnet
    * @param {string[]} clusterInfo.ntpServer
    * @param {string[]} clusterInfo.nameserver
-   * @param {boolean} clusterInfo.rdmanEnabled
+   * @param {boolean} clusterInfo.rdmaEnabled
    * @param {Node[]} nodes
    * @param {String} nodes[].ipmiIP
    * @param {String} nodes[].ipmiMac
@@ -89,7 +89,7 @@ class Foundation {
     let blockID = 'none'
     let svmList = []
     let numNodesToFormCluster = nodes.length
-    let initNodes = operations.imageNodes || true, initCluster = operations.formCluster || false
+    let initNodes = operations?.imageNodes ?? true, initCluster = operations?.formCluster ?? false
     if (advanced.numberOfNodesToBuildClusterWith) {
       numNodesToFormCluster = advanced.numberOfNodesToBuildClusterWith
     }
@@ -156,7 +156,7 @@ class Foundation {
         cluster_external_ip: clusterInfo.externalIP,
         cluster_members: svmList,
         single_node_cluster: svmList.length == 1,
-        redundancy_factor: 2,
+        redundancy_factor: null,
         cvm_dns_servers: clusterInfo.nameserver,
         cvm_ntp_servers: clusterInfo.ntpServer || clusterInfo.nameserver,
         hypervisor_ntp_servers: clusterInfo.ntpServer || clusterInfo.nameserver
