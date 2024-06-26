@@ -44,6 +44,9 @@ scan:
   image: eclipse-temurin:17
   needs:
     - build
+  before_script:
+    - apt update
+    - apt install unzip
   script:
     - /bin/bash bin/blackduck.sh
     - /bin/bash bin/veracode.sh
