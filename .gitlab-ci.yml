@@ -46,4 +46,5 @@ scan:
     - build
   script:
     - /bin/bash bin/blackduck.sh
+    - /bin/bash bin/veracode.sh
 

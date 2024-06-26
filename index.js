@@ -83,7 +83,7 @@ class Foundation {
    * @param {boolean} [operations.imageNodes=true] Form cluster. If set to true nodes are expected to be imaged previously
    * @returns {Object}
    */
-  generateImageNodePayload(clusterInfo, nodes, hypervisor, aos, advanced={}, operations={}) {
+  generateImageNodePayload(clusterInfo, nodes, hypervisor, aos, advanced={}, operations) {
     let blocks = []
     let blockCount = -1
     let blockID = 'none'
@@ -95,11 +95,15 @@ class Foundation {
     }
     for (let nodeCount = 0; nodeCount < nodes.length; nodeCount++) {
       if (nodeCount < numNodesToFormCluster) {
-        svmList.push(nodes[nodeCount].svmIP)
+        if (nodes[nodeCount].svmIP) {
+          svmList.push(nodes[nodeCount].svmIP)
+        } else if (nodes[nodeCount].cvmIP) {
+          svmList.push(nodes[nodeCount].cvmIP)
+        }
       }
       // CREATE BLOCKS AND NODES
-      if (blockID != nodes[nodeCount].blockID) {
-        blockID = nodes[nodeCount].blockID
+      if (blockID != nodes[nodeCount].blockID && blockID != nodes[nodeCount].chassisSerial) {
+        blockID = nodes[nodeCount].blockID || nodes[nodeCount].chassisSerial
         blocks.push({
           block_id: '',
           model: '',
@@ -107,20 +111,20 @@ class Foundation {
         })
         blockCount++
       }
-      blocks[blockCount].block_id = nodes[nodeCount].blockID
+      blocks[blockCount].block_id = blockID //nodes[nodeCount].blockID
       blocks[blockCount].model = nodes[nodeCount].model
       blocks[blockCount].nodes.push({
         ipmi_ip: nodes[nodeCount].ipmiIP,
         ipmi_mac: nodes[nodeCount].ipmiMac || null,
-        ipmi_user: nodes[nodeCount].ipmiUsername || 'ADMIN',
-        ipmi_password: nodes[nodeCount].ipmiPassword || 'ADMIN',
+        ipmi_user: nodes[nodeCount].ipmiUsername || nodes[nodeCount].ipmiCredentials.username,
+        ipmi_password: nodes[nodeCount].ipmiPassword || nodes[nodeCount].ipmiCredentials.password,
         ipmi_configure_now: advanced.configureIPMI || false,
         // A null hypervisor means "bundled AHV", which is treated as kvm.
-        hypervisor: hypervisor === null ? 'kvm' : hypervisor.os,
-        hypervisor_ip: nodes[nodeCount].hypervisorIP,
+        hypervisor: hypervisor === null ? 'kvm' : hypervisor.os || hypervisor.type,
+        hypervisor_ip: nodes[nodeCount].hypervisorIP || nodes[nodeCount].hostIP,
         hypervisor_hostname: initNodes ? clusterInfo.name + '-' + (nodeCount + 1) : null,
         ipmi_configure_successful: true,
-        node_position: nodes[nodeCount].position,
+        node_position: nodes[nodeCount].position || 'A',
         ucsm_managed_mode: (advanced.ucs) || null,
         ucsm_node_serial: nodes[nodeCount].serial || null,
         // Hypervisor can be null (bundled AHV), so we need to make sure it's
@@ -129,7 +133,7 @@ class Foundation {
         image_successful: false,
         image_now: initNodes,
         cvm_gb_ram: Number(advanced.cvmRamInGB) || undefined,
-        cvm_ip: nodes[nodeCount].svmIP,
+        cvm_ip: nodes[nodeCount].svmIP || nodes[nodeCount].cvmIP,
         node_serial: nodes[nodeCount].serial
       })
     }
@@ -137,7 +141,7 @@ class Foundation {
     let payload = {
       hypervisor_netmask: clusterInfo.subnet,
       hypervisor_gateway: clusterInfo.gateway,
-      hypervisor_nameserver: clusterInfo.nameserver,
+      hypervisor_nameserver: Array.isArray(clusterInfo.nameserver) ? clusterInfo.nameserver.join(',') : clusterInfo.nameserver,
       rdma_passthrough: clusterInfo.rdmaEnabled ? true : false,
       ipmi_configure_now: advanced.configureIPMI || false,
       ipmi_netmask: nodes[0].ipmiSubnet,
@@ -153,13 +157,13 @@ class Foundation {
         // Breaking this into a two step process.
         cluster_init_now: initCluster,
         cluster_name: clusterInfo.name,
-        cluster_external_ip: clusterInfo.externalIP,
+        cluster_external_ip: clusterInfo.externalIP || clusterInfo.ip,
         cluster_members: svmList,
         single_node_cluster: svmList.length == 1,
         redundancy_factor: null,
-        cvm_dns_servers: clusterInfo.nameserver,
-        cvm_ntp_servers: clusterInfo.ntpServer || clusterInfo.nameserver,
-        hypervisor_ntp_servers: clusterInfo.ntpServer || clusterInfo.nameserver
+        cvm_dns_servers: Array.isArray(clusterInfo.nameserver) ? clusterInfo.nameserver.join(',') : clusterInfo.nameserver,
+        cvm_ntp_servers: Array.isArray(clusterInfo.ntpServer) ? clusterInfo.ntpServer.join(',') : clusterInfo.ntpServer,
+        hypervisor_ntp_servers: Array.isArray(clusterInfo.ntpServer) ? clusterInfo.ntpServer.join(',') : clusterInfo.ntpServer
       }],
       blocks: blocks,
       tests: {
@@ -179,7 +183,7 @@ class Foundation {
       payload.hypervisor_iso = {}
       payload.hypervisor = 'kvm'
     } else {
-      payload.hypervisor_iso[hypervisor.os] = hypervisor.filename
+      payload.hypervisor_iso[hypervisor.os || hypervisor.type] = hypervisor.filename
     }
 
     if (advanced.ucs) {
@@ -189,8 +193,8 @@ class Foundation {
     }
     if (hypervisor && hypervisor.type == 'xen') {
       payload.xs_master_ip = nodes[0].hypervisorIP,
-        payload.xs_master_username = clusterInfo.xs_master_username || 'root'
-      payload.xs_master_password = clusterInfo.xs_master_username || 'nutanix/4u'
+        payload.xs_master_username = clusterInfo.xs_master_username
+      payload.xs_master_password = clusterInfo.xs_master_username
     }
 
     return payload
@@ -201,31 +205,35 @@ class Foundation {
    * See {@link Foundation#generateImageNodePayload} for parameter information.
    * @returns {Object}
    */
-  async imageNodes(cluster, nodes, hypervisor, aos, advanced, formCluster) {
-    let payload = generateImageNodePayload(cluster, nodes, hypervisor, aos, advanced, formCluster)
+  async imageNodes(clusterInfo, nodes, hypervisor, aos, advanced={}, operations) {
+    let payload = this.generateImageNodePayload(clusterInfo, nodes, hypervisor, aos, advanced, operations)
 
-    if (advanced.configureIPMI) {
-      await this.ipmiConfig(cluster, nodes, hypervisor, aos, advanced, formCluster)
+    if (advanced?.configureIPMI) {
+      await this.ipmiConfig(clusterInfo, nodes, hypervisor, aos, advanced, operations)
     }
 
-    return (this._client.post('/image_nodes', payload)).data
+    return (await this._client.post('/image_nodes', payload)).data
   }
 
   /**
    * Configures the IPMI interfaces on requested nodes.
    */
-  async ipmiConfig(cluster, nodes, hypervisor, aos, advanced, formCluster) {
-    let payload = generateImageNodePayload(cluster, nodes, hypervisor, aos, advanced, formCluster)
+  async ipmiConfig(clusterInfo, nodes, hypervisor, aos, advanced, operations) {
+    let payload = generateImageNodePayload(clusterInfo, nodes, hypervisor, aos, advanced, operations)
 
-    return (this._client.post('/ipmi_config', payload)).data
+    return (await this._client.post('/ipmi_config', payload)).data
   }
 
   /**
    * Check status of the foundation server.
    * @returns {object} - Object containing progress of the foundation server.
    */
-  async progress() {
-    return (await this._client.get('/progress')).data
+  async progress(session_id) {
+    const queryParams = {}
+    if (session_id) {
+      queryParams.session_id = session_id
+    }
+    return (await this._client.get('/progress', {params: queryParams})).data
   }
 
   /**
@@ -253,7 +261,7 @@ class Foundation {
    * @returns {LogContents} Object that contains the cluster logContents
    */
   async getClusterLog(clusterIP, sessionID = undefined) {
-    let response = (this._client.get('/cluster_log', { params: { cvm_ip: clusterIP, session_id: sessionID }})).data
+    let response = (await this._client.get('/cluster_log', { params: { cvm_ip: clusterIP, session_id: sessionID }})).data
     return {
       ip: clusterIP,
       logContents: response,
