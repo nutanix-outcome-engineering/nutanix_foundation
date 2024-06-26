@@ -83,14 +83,14 @@ class Foundation {
    * @param {boolean} [operations.imageNodes=true] Form cluster. If set to true nodes are expected to be imaged previously
    * @returns {Object}
    */
-  generateImageNodePayload(clusterInfo, nodes, hypervisor, aos, advanced, operations) {
+  generateImageNodePayload(clusterInfo, nodes, hypervisor, aos, advanced={}, operations={}) {
     let blocks = []
     let blockCount = -1
     let blockID = 'none'
     let svmList = []
     let numNodesToFormCluster = nodes.length
     let initNodes = operations?.imageNodes ?? true, initCluster = operations?.formCluster ?? false
-    if (advanced.numberOfNodesToBuildClusterWith) {
+    if (advanced?.numberOfNodesToBuildClusterWith) {
       numNodesToFormCluster = advanced.numberOfNodesToBuildClusterWith
     }
     for (let nodeCount = 0; nodeCount < nodes.length; nodeCount++) {
