@@ -50,4 +50,11 @@ scan:
   script:
     - /bin/bash bin/blackduck.sh
     - /bin/bash bin/veracode.sh
+  artifacts:
+    untracked: false
+    when: on_success
+    expire_in: "30 days"
+    paths:
+      - results.json
+      - filtered_results.json
 
