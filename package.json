@@ -19,7 +19,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "gitlab.rtp.nutanix.com:corp-se-team/nutanix_foundation"
+    "url": "https://github.com/nutanix-outcome-engineering/nutanix_foundation"
   },
   "author": "Outcome_Engineering@nutanix.com",
   "license": "Apache 2.0",
